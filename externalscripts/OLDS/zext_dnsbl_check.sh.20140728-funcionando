@@ -1,0 +1,30 @@
+#! /bin/sh
+
+# Variaveis
+	host=$1
+	ip=$2
+
+RBLDNS=/etc/zabbix/externalscripts/zext_dnsbl.txt
+DEBUG=0
+if [ "$DEBUG" -gt 0 ]
+then
+    exec 2>>/tmp/zext_dnsbl_check.log
+    set -x
+fi
+shift
+
+# Definindo o ip reverso do host
+rev_ip=$(echo $ip | sed -r 's/([0-9]+)\.([0-9]+)\.([0-9]+)\.([0-9]+)/\4.\3.\2.\1/')
+
+
+	result=0
+	for dnsbl in `cat $RBLDNS`; do
+	    if host -W 1 -t a $rev_ip.$dnsbl >/dev/null 2>&1; then
+		echo $host zext_dnsbl_blacklists $ip blacklisted on $dnsbl
+		host -t txt $rev_ip.$dnsbl | sed "s/^/$host zext_dnsbl_details /" 
+		result=`expr $result + 1`
+	    fi
+	done
+	#echo $host zext_dnsbl_status $result
+	echo "$host fora de blacklists" 
+exit 0

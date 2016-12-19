@@ -1,0 +1,1 @@
+rhel/7/inventory.sh
